@@ -1,0 +1,29 @@
+name: Reset public demo data
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      NODE_ENV: production
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DB_SSL: true
+      CSRF_SECRET: scheduled-reset-csrf-placeholder-longer-than-32-characters
+      CONFIRM_DEMO_RESET: RESET_PUBLIC_DEMO
+      LOG_LEVEL: info
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --omit=dev
+      - run: npm run db:seed

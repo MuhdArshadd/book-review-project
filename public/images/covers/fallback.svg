@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="900" viewBox="0 0 600 900" role="img" aria-labelledby="title">
+  <title id="title">Book cover unavailable</title>
+  <rect width="600" height="900" fill="#31594a"/>
+  <rect x="42" y="42" width="516" height="816" fill="none" stroke="#f8f6f0" stroke-width="4"/>
+  <text x="300" y="420" fill="#f8f6f0" font-family="Georgia, serif" font-size="54" text-anchor="middle">BOOK</text>
+  <text x="300" y="485" fill="#d8c99b" font-family="Arial, sans-serif" font-size="24" text-anchor="middle">COVER UNAVAILABLE</text>
+</svg>

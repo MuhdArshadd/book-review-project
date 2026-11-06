@@ -1,0 +1,99 @@
+<%- include("partials/header") %>
+
+<section class="container details-page">
+  <a class="back-link" href="/books">← Back to collection</a>
+
+  <% if (message) { %>
+    <div class="notice success" role="status"><%= message %></div>
+  <% } %>
+
+  <div class="book-details">
+    <div class="details-cover">
+      <img src="<%= book.BookImage %>" data-fallback-src="/images/covers/fallback.svg" alt="Cover of <%= book.BookName %>">
+    </div>
+    <div class="details-content">
+      <p class="eyebrow">Book details</p>
+      <h1><%= book.BookName %></h1>
+      <p class="details-author">by <%= book.BookAuthor %></p>
+      <div class="average-rating">
+        <span class="rating-star" aria-hidden="true">★</span>
+        <div>
+          <strong><%= averageRating === null ? "Not rated" : Number(averageRating).toFixed(1) + " / 5" %></strong>
+          <span>Average reader rating</span>
+        </div>
+      </div>
+      <h2>About this book</h2>
+      <p class="description"><%= book.Description %></p>
+    </div>
+  </div>
+
+  <div class="interaction-grid">
+    <section class="panel">
+      <p class="eyebrow">Your opinion</p>
+      <h2>Rate this book</h2>
+      <form action="/books/<%= book.id %>/ratings" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <fieldset class="star-rating">
+          <legend>Choose a rating from 1 to 5 stars</legend>
+          <% for (let rating = 1; rating <= 5; rating += 1) { %>
+            <label>
+              <input type="radio" name="rating" value="<%= rating %>" required>
+              <span><%= rating %> ★</span>
+            </label>
+          <% } %>
+        </fieldset>
+        <button class="button full-width" type="submit">Submit Rating</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <p class="eyebrow">Join the discussion</p>
+      <h2>Write a review</h2>
+      <form action="/books/<%= book.id %>/reviews" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-group">
+          <label for="review">Your review</label>
+          <textarea id="review" name="review" rows="5" maxlength="12000" placeholder="What did you think of this book?" required></textarea>
+        </div>
+        <button class="button full-width" type="submit">Post Review</button>
+      </form>
+    </section>
+  </div>
+
+  <section class="reviews-section">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Reader notes</p>
+        <h2>Reviews (<%= reviews.length %>)</h2>
+      </div>
+    </div>
+
+    <% if (reviews.length === 0) { %>
+      <div class="empty-reviews">
+        <p>No reviews yet. Be the first to share your thoughts.</p>
+      </div>
+    <% } else { %>
+      <div class="review-list">
+        <% reviews.forEach((item) => { %>
+          <article class="review-card">
+            <span class="quote-mark" aria-hidden="true">“</span>
+            <p><%= item.review %></p>
+          </article>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+
+  <section class="danger-zone">
+    <div>
+      <h2>Remove this book</h2>
+      <p>This also removes every rating and review attached to it.</p>
+    </div>
+    <form action="/books/<%= book.id %>/delete" method="POST" data-confirm="Delete this book and all its ratings and reviews?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="button button-danger" type="submit">Delete Book</button>
+    </form>
+  </section>
+</section>
+
+<%- include("partials/footer") %>

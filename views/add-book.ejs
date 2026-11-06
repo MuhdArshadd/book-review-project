@@ -1,0 +1,54 @@
+<%- include("partials/header") %>
+
+<section class="container form-page">
+  <a class="back-link" href="/books">← Back to collection</a>
+  <div class="form-layout">
+    <div class="form-intro">
+      <p class="eyebrow">Grow your shelf</p>
+      <h1>Add a new book</h1>
+      <p>Enter the book details below. Each title and author combination can only be added once.</p>
+    </div>
+
+    <form class="panel book-form" action="/books" method="POST" novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (errors.length > 0) { %>
+        <div class="notice error" role="alert">
+          <strong>Please check the form:</strong>
+          <ul>
+            <% errors.forEach((error) => { %>
+              <li><%= error %></li>
+            <% }); %>
+          </ul>
+        </div>
+      <% } %>
+
+      <div class="form-group">
+        <label for="BookName">Book Title</label>
+        <input id="BookName" name="BookName" type="text" maxlength="45" value="<%= values.BookName || "" %>" required>
+      </div>
+
+      <div class="form-group">
+        <label for="BookAuthor">Book Author</label>
+        <input id="BookAuthor" name="BookAuthor" type="text" maxlength="45" value="<%= values.BookAuthor || "" %>" required>
+      </div>
+
+      <div class="form-group">
+        <label for="BookImage">Book Image URL</label>
+        <input id="BookImage" name="BookImage" type="url" maxlength="255" placeholder="https://example.com/book-cover.jpg" value="<%= values.BookImage || "" %>" required>
+        <small>Use a complete URL beginning with http:// or https://</small>
+      </div>
+
+      <div class="form-group">
+        <label for="Description">Book Description</label>
+        <textarea id="Description" name="Description" rows="7" maxlength="12000" required><%= values.Description || "" %></textarea>
+      </div>
+
+      <div class="form-actions">
+        <a class="button button-secondary" href="/books">Cancel</a>
+        <button class="button" type="submit">Add Book</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<%- include("partials/footer") %>

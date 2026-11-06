@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %> | Book Collection</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-content">
+      <a class="brand" href="/books" aria-label="Book Collection home">
+        <span class="brand-icon" aria-hidden="true">B</span>
+        <span>Book Collection</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="/books">All Books</a>
+        <a href="/api-docs">API Docs</a>
+        <a class="button button-small" href="/books/new">Add a Book</a>
+      </nav>
+    </div>
+  </header>
+  <% if (demoMode) { %>
+    <aside class="demo-banner" aria-label="Public demo notice">
+      Public demo: visitor changes are shared and the sample data resets every six hours.
+    </aside>
+  <% } %>
+  <main>

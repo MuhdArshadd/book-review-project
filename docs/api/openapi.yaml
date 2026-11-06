@@ -1,0 +1,403 @@
+openapi: 3.0.3
+info:
+  title: Book Review API
+  version: 1.0.0
+  description: >-
+    JSON API for the Book Collection portfolio project. The public demo is
+    rate-limited and its data is restored every six hours.
+servers:
+  - url: /
+    description: Current application
+tags:
+  - name: Books
+  - name: Ratings
+  - name: Reviews
+paths:
+  /health/live:
+    get:
+      summary: Confirm the process is running
+      operationId: getLiveness
+      responses:
+        "200":
+          description: Application process is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /health/ready:
+    get:
+      summary: Confirm the application and database are ready
+      operationId: getReadiness
+      responses:
+        "200":
+          description: Application can query its database
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "500":
+          description: Database is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/books:
+    get:
+      tags: [Books]
+      summary: List books
+      operationId: listBooks
+      parameters:
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Paginated book collection
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Book"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+    post:
+      tags: [Books]
+      summary: Add a book
+      operationId: createBook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBook"
+      responses:
+        "201":
+          description: Book created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+  /api/v1/books/{id}:
+    parameters:
+      - $ref: "#/components/parameters/BookId"
+    get:
+      tags: [Books]
+      summary: Get book details
+      operationId: getBook
+      responses:
+        "200":
+          description: Book, average rating, and reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    allOf:
+                      - $ref: "#/components/schemas/Book"
+                      - type: object
+                        required: [reviews]
+                        properties:
+                          reviews:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Review"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+    delete:
+      tags: [Books]
+      summary: Delete a book and its related ratings and reviews
+      operationId: deleteBook
+      responses:
+        "204":
+          description: Book deleted
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+  /api/v1/books/{id}/ratings:
+    parameters:
+      - $ref: "#/components/parameters/BookId"
+    post:
+      tags: [Ratings]
+      summary: Rate a book from 1 to 5
+      operationId: createRating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+      responses:
+        "201":
+          description: Rating created and average recalculated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Rating"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+  /api/v1/books/{id}/reviews:
+    parameters:
+      - $ref: "#/components/parameters/BookId"
+    post:
+      tags: [Reviews]
+      summary: Add a review
+      operationId: createReview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [review]
+              properties:
+                review:
+                  type: string
+                  minLength: 1
+                  maxLength: 12000
+      responses:
+        "201":
+          description: Review created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Review"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+components:
+  parameters:
+    BookId:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+  schemas:
+    Book:
+      type: object
+      required: [id, title, author, imageUrl, description, averageRating]
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          maxLength: 45
+          example: The Little Prince
+        author:
+          type: string
+          maxLength: 45
+          example: Antoine de Saint-Exupéry
+        imageUrl:
+          type: string
+          format: uri-reference
+          example: /images/covers/little-prince.svg
+        description:
+          type: string
+          maxLength: 12000
+        averageRating:
+          type: number
+          format: float
+          minimum: 1
+          maximum: 5
+          nullable: true
+          example: 4.7
+    CreateBook:
+      type: object
+      additionalProperties: false
+      required: [title, author, imageUrl, description]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 45
+        author:
+          type: string
+          minLength: 1
+          maxLength: 45
+        imageUrl:
+          type: string
+          format: uri
+          maxLength: 255
+        description:
+          type: string
+          minLength: 1
+          maxLength: 12000
+    Review:
+      type: object
+      required: [id, bookId, review]
+      properties:
+        id:
+          type: integer
+        bookId:
+          type: integer
+        review:
+          type: string
+    Rating:
+      type: object
+      required: [id, bookId, rating, averageRating]
+      properties:
+        id:
+          type: integer
+        bookId:
+          type: integer
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        averageRating:
+          type: number
+          format: float
+    PaginationMeta:
+      type: object
+      required: [total, count, sort, limit, offset]
+      properties:
+        total:
+          type: integer
+        count:
+          type: integer
+        sort:
+          type: string
+          enum: [asc, desc]
+        limit:
+          type: integer
+        offset:
+          type: integer
+    BookResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Book"
+    HealthResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [status, timestamp]
+          properties:
+            status:
+              type: string
+              enum: [ok, ready]
+            service:
+              type: string
+            database:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+            requestId:
+              type: string
+  responses:
+    ValidationError:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFoundError:
+      description: Book not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ConflictError:
+      description: Duplicate book or demo capacity reached
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    RateLimitError:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"

@@ -1,0 +1,104 @@
+name: CI and deploy
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: booksdb_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      NODE_ENV: test
+      PORT: 3000
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: booksdb_test
+      TEST_DB_NAME: booksdb_test
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      DB_SSL: false
+      APP_ORIGIN: http://localhost:3000
+      CSRF_SECRET: test-csrf-secret-that-is-longer-than-thirty-two-characters
+      DEMO_MODE: true
+      LOG_LEVEL: silent
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run check
+      - run: npm run db:migrate
+      - run: npm run test:ci
+      - run: npm run openapi:validate
+      - run: npm run security:audit
+      - run: npm run db:seed
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm run docs:build
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: qa-results
+          path: |
+            coverage/
+            reports/
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: quality
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Trigger tested commit on Render
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "Render deploy hook is not configured; skipping deployment."
+            exit 0
+          fi
+          curl --fail --silent --show-error --request POST "${RENDER_DEPLOY_HOOK_URL}&ref=${GITHUB_SHA}"
+      - name: Wait for production readiness
+        env:
+          PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
+        run: |
+          if [ -z "$PRODUCTION_URL" ]; then
+            echo "Production URL is not configured; skipping smoke checks."
+            exit 0
+          fi
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent "${PRODUCTION_URL}/health/ready" > /dev/null; then
+              curl --fail --silent "${PRODUCTION_URL}/api/v1/books?limit=1" > /dev/null
+              echo "Production smoke checks passed."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Production did not become ready in time."
+          exit 1

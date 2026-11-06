@@ -1,0 +1,31 @@
+CREATE DATABASE IF NOT EXISTS booksdb;
+USE booksdb;
+
+CREATE TABLE IF NOT EXISTS books (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  BookName VARCHAR(45) NOT NULL,
+  Description VARCHAR(12000) NOT NULL,
+  BookImage VARCHAR(255) NOT NULL,
+  BookAuthor VARCHAR(45) NOT NULL,
+  CONSTRAINT books_title_author_unique UNIQUE (BookName, BookAuthor)
+);
+
+CREATE TABLE IF NOT EXISTS rating (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  bookId INT NOT NULL,
+  rating INT NOT NULL,
+  CONSTRAINT fk_rating_book
+    FOREIGN KEY (bookId) REFERENCES books(id)
+    ON DELETE CASCADE,
+  CONSTRAINT chk_rating_range
+    CHECK (rating BETWEEN 1 AND 5)
+);
+
+CREATE TABLE IF NOT EXISTS review (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  bookId INT NOT NULL,
+  review VARCHAR(12000) NOT NULL,
+  CONSTRAINT fk_review_book
+    FOREIGN KEY (bookId) REFERENCES books(id)
+    ON DELETE CASCADE
+);

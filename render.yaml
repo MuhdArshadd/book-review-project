@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: book-review-portfolio
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --omit=dev
+    startCommand: npm run start:production
+    healthCheckPath: /health/ready
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: DB_SSL
+        value: "true"
+      - key: DEMO_MODE
+        value: "true"
+      - key: APP_ORIGIN
+        sync: false
+      - key: QA_DASHBOARD_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: CSRF_SECRET
+        generateValue: true
