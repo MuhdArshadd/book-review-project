@@ -1,15 +1,17 @@
 # Book Collection
 
+![Book Collection home page](public/images/book-review-home.png)
+
 A portfolio-grade book review website and JSON API built with Express, EJS, Sequelize, and a MySQL-compatible database.
 
 The project demonstrates server-rendered UI development, REST API design, relational data, validation, security controls, automated testing, API documentation, CI/CD, and zero-cost cloud deployment.
 
 ## Project links
 
-- **Live demo:** add the assigned `onrender.com` URL after the first Render deployment
-- **Interactive API:** `/api-docs` on the running application
+- **Live demo:** [Book Collection](https://book-review-portfolio.onrender.com)
+- **Interactive API:** [Swagger UI](https://book-review-portfolio.onrender.com/api-docs/)
 - **OpenAPI file:** [`docs/api/openapi.yaml`](docs/api/openapi.yaml)
-- **Full documentation:** published to GitHub Pages by the documentation workflow
+- **Full documentation:** [Project documentation](https://MuhdArshadd.github.io/book-review-project/)
 
 ## Architecture
 
