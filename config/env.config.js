@@ -3,7 +3,8 @@ const path = require("path");
 
 dotenv.config({ path: path.resolve(__dirname, "../.env"), quiet: true });
 
-const parseBoolean = (value, fallback = false) => {
+const parseBoolean = (name, fallback = false) => {
+  const value = process.env[name];
   if (value === undefined) return fallback;
   return ["true", "1", "yes"].includes(String(value).toLowerCase());
 };
@@ -21,6 +22,7 @@ const NODE_ENV = process.env.NODE_ENV || "development";
 const IS_PRODUCTION = NODE_ENV === "production";
 const DATABASE_URL = process.env.DATABASE_URL || "";
 const CSRF_SECRET = process.env.CSRF_SECRET || "local-development-csrf-secret-change-me";
+const DB_SSL = parseBoolean("DB_SSL", IS_PRODUCTION);
 
 if (IS_PRODUCTION && !DATABASE_URL) {
   throw new Error("DATABASE_URL is required in production");
@@ -28,6 +30,10 @@ if (IS_PRODUCTION && !DATABASE_URL) {
 
 if (IS_PRODUCTION && CSRF_SECRET.length < 32) {
   throw new Error("CSRF_SECRET must contain at least 32 characters in production");
+}
+
+if (IS_PRODUCTION && !DB_SSL) {
+  throw new Error("DB_SSL must be true in production");
 }
 
 module.exports = {
@@ -40,7 +46,7 @@ module.exports = {
   DB_NAME: process.env.DB_NAME || "booksdb",
   DB_USERNAME: process.env.DB_USERNAME || "root",
   DB_PASSWORD: process.env.DB_PASSWORD || "",
-  DB_SSL: parseBoolean("DB_SSL", IS_PRODUCTION),
+  DB_SSL,
   APP_ORIGIN: process.env.APP_ORIGIN || "http://localhost:3000",
   QA_DASHBOARD_ORIGIN: process.env.QA_DASHBOARD_ORIGIN || "",
   CSRF_SECRET,
