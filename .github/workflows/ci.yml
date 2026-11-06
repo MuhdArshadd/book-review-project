@@ -59,7 +59,7 @@ jobs:
       - run: npm run docs:build
       - name: Upload test evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: qa-results
           path: |
